@@ -2,6 +2,7 @@
 
 # Source files
 # ============
+*.html linguist-vendored
 *.Rdata text
 *.rdb   binary
 *.rds   binary
