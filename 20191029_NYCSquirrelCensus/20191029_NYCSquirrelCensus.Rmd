@@ -1,6 +1,8 @@
 ---
 title: "TidyTuesday 2019-10-29 - A Glimpse on the NYC Squirrel Census by Lasse Scheele"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 ## Loading packages
