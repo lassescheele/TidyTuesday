@@ -1,0 +1,240 @@
+---
+title: "Tidytuesday 2019-10-29 - NYC Squirrel Cebsus by Lasse Scheele"
+output: html_notebook
+---
+
+## Loading packages
+
+```{r Load packages, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(gridExtra)
+```
+
+## Reading data
+```{r Load data, warning=FALSE, message=FALSE}
+nyc_squirrels_raw <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-10-29/nyc_squirrels.csv")
+```
+
+
+## Cleaning data
+```{r}
+nyc_squirrels <- nyc_squirrels_raw %>%
+  mutate(date = lubridate::mdy(date),
+         hectare_ns = str_extract(hectare, "[0-9]+"),
+         hectare_ew = str_extract(hectare, "[aA-zZ]+"),
+         hectare = as.factor(hectare),
+         hectare_ns = as.factor(hectare_ns),
+         hectare_ew = as.factor(hectare_ew),
+         human_interaction = ifelse(approaches==TRUE,"approaches",
+                                    ifelse(indifferent==TRUE,"indifferent",
+                                           ifelse(runs_from==TRUE,"runs_from",NA))))
+c_hectare_ns <- sort(unique(nyc_squirrels$hectare_ns))
+c_hectare_ew <- sort(unique(nyc_squirrels$hectare_ew))
+```
+
+## Analyzing spatial destribution of primary colors
+
+```{r}
+c_primary_fur_color <- unique(nyc_squirrels$primary_fur_color %>% na.omit())
+c_color_codes <- c("gray50","sienna3","black")
+```
+
+```{r, fig.width = 15, fig.height = 12}
+# Plot all
+nyc_squirrels %>%
+  expand(hectare_ns, hectare_ew) %>%
+  left_join(nyc_squirrels %>%
+              group_by(hectare_ns,hectare_ew) %>%
+              summarise(sum_sightings = n()), by = c("hectare_ns", "hectare_ew")) %>%
+  mutate(sum_sightings = replace_na(sum_sightings, 0)) %>%
+  ggplot(aes(x=hectare_ew, y=hectare_ns, fill=sum_sightings)) +
+  geom_tile() +
+  scale_fill_continuous(low = "white", high = "green4") +
+  coord_equal() +
+  theme(legend.position="bottom", legend.title = element_blank(), plot.title = element_text(size = 12)) + 
+  ggtitle('All squirrels') +
+  xlab("east-west") + ylab("north-south") -> plot_all
+
+# Plot gray
+color_index <- 1
+color_str <- c_primary_fur_color[color_index]
+nyc_squirrels %>%
+  filter(primary_fur_color==color_str) %>%
+  expand(hectare_ns, hectare_ew) %>%
+  left_join(nyc_squirrels %>%
+              filter(primary_fur_color==color_str) %>%
+              group_by(hectare_ns,hectare_ew) %>%
+              summarise(sum_sightings = n()), by = c("hectare_ns", "hectare_ew")) %>%
+  mutate(sum_sightings = replace_na(sum_sightings, 0)) %>%
+  ggplot(aes(x=hectare_ew, y=hectare_ns, fill=sum_sightings)) +
+  geom_tile() +
+  scale_fill_continuous(low = "white", high = c_color_codes[color_index]) +
+  coord_equal() +
+  theme(legend.position="bottom", legend.title = element_blank(), plot.title = element_text(size = 12)) +
+  ggtitle(paste("Squirrel color:",color_str)) +
+  xlab("east-west") + ylab("north-south") -> plot_gray
+
+# Plot cinnamon
+color_index <- 2
+color_str <- c_primary_fur_color[color_index]
+nyc_squirrels %>%
+  filter(primary_fur_color==color_str) %>%
+  expand(hectare_ns, hectare_ew) %>%
+  left_join(nyc_squirrels %>%
+              filter(primary_fur_color==color_str) %>%
+              group_by(hectare_ns,hectare_ew) %>%
+              summarise(sum_sightings = n()), by = c("hectare_ns", "hectare_ew")) %>%
+  mutate(sum_sightings = replace_na(sum_sightings, 0)) %>%
+  ggplot(aes(x=hectare_ew, y=hectare_ns, fill=sum_sightings)) +
+  geom_tile() +
+  scale_fill_continuous(low = "white", high = c_color_codes[color_index]) +
+  coord_equal() +
+  theme(legend.position="bottom", legend.title = element_blank(), plot.title = element_text(size = 12)) +
+  ggtitle(paste("Squirrel color:",color_str)) +
+  xlab("east-west") + ylab("north-south") -> plot_cinnamon
+
+# Plot black
+color_index <- 3
+color_str <- c_primary_fur_color[color_index]
+nyc_squirrels %>%
+  filter(primary_fur_color==color_str) %>%
+  expand(hectare_ns, hectare_ew) %>%
+  left_join(nyc_squirrels %>%
+              filter(primary_fur_color==color_str) %>%
+              group_by(hectare_ns,hectare_ew) %>%
+              summarise(sum_sightings = n()), by = c("hectare_ns", "hectare_ew")) %>%
+  mutate(sum_sightings = replace_na(sum_sightings, 0)) %>%
+  ggplot(aes(x=hectare_ew, y=hectare_ns, fill=sum_sightings)) +
+  geom_tile() +
+  scale_fill_continuous(low = "white", high = c_color_codes[color_index]) +
+  coord_equal() +
+  theme(legend.position="bottom", legend.title = element_blank(), plot.title = element_text(size = 12)) +
+  ggtitle(paste("Squirrel color:",color_str)) +
+  xlab("east-west") + ylab("north-south") -> plot_black
+
+nyc_squirrels %>%
+  filter(is.na(primary_fur_color)) %>%
+  expand(hectare_ns, hectare_ew) %>%
+  left_join(nyc_squirrels %>%
+              filter(is.na(primary_fur_color)) %>%
+              group_by(hectare_ns,hectare_ew) %>%
+              summarise(sum_sightings = n()), by = c("hectare_ns", "hectare_ew")) %>%
+  mutate(sum_sightings = replace_na(sum_sightings, 0)) %>%
+  ggplot(aes(x=hectare_ew, y=hectare_ns, fill=sum_sightings)) +
+  geom_tile() +
+  scale_fill_continuous(low = "white", high = "red") + # , na.value="white"
+  coord_equal() +
+  theme(legend.position="bottom", legend.title = element_blank(), plot.title = element_text(size = 12)) +
+  ggtitle("Color not available") +
+  xlab("east-west") + ylab("north-south") -> plot_na
+
+grid.arrange(plot_all, plot_gray, plot_cinnamon, plot_black, plot_na, nrow = 1, top = "Squirrel Sightings by Color")
+```
+
+Findings:
+
+- the gray squirrels are the main population and seen all over central park
+- the cinnamon colored squirrels are seen more often in the south
+- the black squirrels are seen more often in the north
+
+
+
+```{r, fig.height = 8}
+nyc_squirrels %>%
+  filter(!is.na(primary_fur_color)) %>%
+  ggplot(aes(x=long, y=lat, color=primary_fur_color)) +
+  geom_point(size=1.5) + 
+  scale_color_manual(values=c("black", "sienna3", "gray50")) +
+  geom_density_2d() +
+  coord_equal() +
+  facet_grid(. ~ primary_fur_color)
+```
+
+## Analyzing behaviour
+
+```{r, fig.width = 9, fig.height = 12}
+nyc_squirrels %>%
+  filter(approaches==TRUE) %>%
+  expand(hectare_ns, hectare_ew) %>%
+  left_join(nyc_squirrels %>%
+              filter(approaches==TRUE) %>%
+              group_by(hectare_ns,hectare_ew,approaches) %>%
+              summarise(sum_sightings = n()) %>%
+              select(hectare_ns,hectare_ew,sum_sightings),
+            by = c("hectare_ns", "hectare_ew")) %>%
+  mutate(sum_sightings = replace_na(sum_sightings, 0)) %>%
+  ggplot(aes(x=hectare_ew, y=hectare_ns, fill=sum_sightings)) +
+  geom_tile() +
+  scale_fill_continuous(low = "white", high = "green4") +
+  coord_equal() +
+  theme(legend.position="bottom", legend.title = element_blank(), plot.title = element_text(size = 12)) +
+  ggtitle(paste("Squirrel approaches")) +
+  xlab("east-west") + ylab("north-south") -> plot_approaches
+
+nyc_squirrels %>%
+  filter(indifferent==TRUE) %>%
+  expand(hectare_ns, hectare_ew) %>%
+  left_join(nyc_squirrels %>%
+              filter(indifferent==TRUE) %>%
+              group_by(hectare_ns,hectare_ew,indifferent) %>%
+              summarise(sum_sightings = n()) %>%
+              select(hectare_ns,hectare_ew,sum_sightings),
+            by = c("hectare_ns", "hectare_ew")) %>%
+  mutate(sum_sightings = replace_na(sum_sightings, 0)) %>%
+  ggplot(aes(x=hectare_ew, y=hectare_ns, fill=sum_sightings)) +
+  geom_tile() +
+  scale_fill_continuous(low = "white", high = "gold") +
+  coord_equal() +
+  theme(legend.position="bottom", legend.title = element_blank(), plot.title = element_text(size = 12)) +
+  ggtitle(paste("Squirrel indifferent")) +
+  xlab("east-west") + ylab("north-south") -> plot_indifferent
+
+nyc_squirrels %>%
+  filter(runs_from==TRUE) %>%
+  expand(hectare_ns, hectare_ew) %>%
+  left_join(nyc_squirrels %>%
+              filter(runs_from==TRUE) %>%
+              group_by(hectare_ns,hectare_ew,runs_from) %>%
+              summarise(sum_sightings = n()) %>%
+              select(hectare_ns,hectare_ew,sum_sightings),
+            by = c("hectare_ns", "hectare_ew")) %>%
+  mutate(sum_sightings = replace_na(sum_sightings, 0)) %>%
+  ggplot(aes(x=hectare_ew, y=hectare_ns, fill=sum_sightings)) +
+  geom_tile() +
+  scale_fill_continuous(low = "white", high = "firebrick") +
+  coord_equal() +
+  theme(legend.position="bottom", legend.title = element_blank(), plot.title = element_text(size = 12)) +
+  ggtitle(paste("Squirrel runs away")) +
+  xlab("east-west") + ylab("north-south") -> plot_runs_from
+
+grid.arrange(plot_approaches, plot_indifferent, plot_runs_from, nrow = 1, top = "Squirrel Sightings by Interaction with Humans")
+```
+
+Findings:
+
+- Most squirrels seem to be indifferent when they meet humans
+- Squirrels to the south seem to be more used to humans
+- Squirels to the north seem to be more cautious
+
+## Analyzing single IDs
+
+## Analyzing temporal patterns
+
+```{r}
+nyc_squirrels %>%
+  mutate(hour = ifelse(shift == 'AM' , 6, 18),
+         datetime = date + lubridate::duration(hour, units="hours")) %>%
+  group_by(datetime, running) %>%
+  summarise(sum_sightings = n()) %>%
+  ggplot(aes(x=datetime, y=sum_sightings)) +
+    geom_line() +
+  facet_grid(running ~ .)
+
+nyc_squirrels %>%
+  group_by(date, shift, running, eating) %>%
+  summarise(sum_sightings = n()) %>%
+  ggplot(aes(x=date, y=sum_sightings)) +
+  geom_line() +
+  facet_grid(shift ~ running + eating)
+```
+
