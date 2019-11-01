@@ -107,7 +107,7 @@ grid.arrange(plot_all, plot_gray, plot_cinnamon, plot_black, plot_na, nrow = 1, 
 
 Findings:
 
-- the gray squirrels are the main population and seen all over central park
+- the gray squirrels are the main population and seen all over Central Park
 - the cinnamon colored squirrels are seen more often in the south
 - the black squirrels are seen more often in the north
 
