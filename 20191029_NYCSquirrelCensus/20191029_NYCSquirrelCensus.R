@@ -13,13 +13,13 @@ library(gridExtra)
 
 
 ## Reading data
-data_source_name <- "Sqirrel Census"
+data_source_name <- "NYC Squirrel Census"
 nyc_squirrels_raw <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-10-29/nyc_squirrels.csv")
 
 
 ## Settings
 plot_signature <- textGrob(
-  paste0("Data: ",data_source_name,", Author: Lasse Scheele (",format(Sys.time(), "%Y"),")"),
+  paste0("Data: ",data_source_name,", Author: Lasse Scheele (@LasSchee), Date: ",format(Sys.time(), "%x")),
   gp = gpar(fontface = 3, fontsize = 9),
   hjust = 1,
   x = 1
