@@ -10,6 +10,7 @@
 library(tidyverse)
 library(grid)
 library(gridExtra)
+library(skimr)
 
 
 ## Reading data
