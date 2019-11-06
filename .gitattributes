@@ -3,10 +3,10 @@
 # Source files
 # ============
 *.html linguist-vendored
-*.Rdata text
+*.Rdata linguist-language=R
 *.rdb   binary
 *.rds   binary
 *.Rd    text
 *.Rdx   binary
-*.Rmd	text
-*.R  	text
+*.Rmd	linguist-language=R
+*.R  	linguist-language=R
