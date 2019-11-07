@@ -1,0 +1,97 @@
+---
+title: "R Notebook"
+author: Lasse Scheele
+date: 2019-11-07
+output:
+  md_document:
+    variant: markdown_github
+---
+
+```{r Loading packages, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(grid)
+library(gridExtra)
+library(skimr)
+library(cluster)
+library(factoextra)
+library(magrittr)
+library(reshape2)
+library(plyr)
+```
+
+
+```{r Reading data}
+commute_mode <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-11-05/commute.csv")
+```
+```{r Cleaning data}
+
+
+```
+
+## Clustering of cities
+
+Input: https://www.datanovia.com/en/blog/types-of-clustering-methods-overview-and-quick-start-r-code/
+
+
+```{r Prepare ciries for clustering}
+commute_mode_clustering_city <- commute_mode %>%
+  select(city, mode, n) %>%
+  dcast(formula=city ~ mode, value.var="n", fun.aggregate = mean, na.rm=TRUE) %>%
+  dplyr::rename(workers_biking = Bike,
+                workers_walking = Walk) %>%
+  dplyr::left_join((commute_mode %>%
+  select(city, mode, percent) %>%
+  dcast(formula=city ~ mode, value.var="percent", fun.aggregate = mean, na.rm=TRUE) %>%
+  dplyr::rename(percent_workers_biking = Bike,
+                percent_workers_walking = Walk)), by = "city")
+row.names(commute_mode_clustering_city) <- commute_mode_clustering_city$city
+commute_mode_clustering_city <- commute_mode_clustering_city %>% select(-city)
+```
+
+```{r}
+# res.dist <- get_dist(commute_mode_clustering_city, stand = TRUE, method = "pearson")
+# 
+# fviz_dist(res.dist, 
+#    gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
+```
+
+
+```{r echo=FALSE}
+# knitr::include_graphics('/Plots/matrix.png')
+```
+
+```{r Clustering cities}
+
+```
+
+
+## Clustering of States
+
+```{r Prepare states for clustering}
+commute_mode_clustering_state <- commute_mode %>%
+  select(state, mode, n) %>%
+  dcast(formula=state ~ mode, value.var="n", fun.aggregate = sum, na.rm=TRUE) %>%
+  dplyr::rename(workers_biking = Bike,
+                workers_walking = Walk) %>%
+  dplyr::left_join((commute_mode %>%
+  select(state, mode, percent) %>%
+  dcast(formula=state ~ mode, value.var="percent", fun.aggregate = mean, na.rm=TRUE) %>%
+  dplyr::rename(percent_workers_biking = Bike,
+                percent_workers_walking = Walk)), by = "state")
+row.names(commute_mode_clustering_state) <- commute_mode_clustering_state$state
+commute_mode_clustering_state <- commute_mode_clustering_state %>% select(-state)
+```
+
+```{r}
+res.dist <- get_dist(commute_mode_clustering_state %>% na.omit(), stand = TRUE, method = "pearson")
+
+fviz_dist(res.dist,
+   gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
+```
+
+```{r Clustering states}
+
+```
+
+
+
