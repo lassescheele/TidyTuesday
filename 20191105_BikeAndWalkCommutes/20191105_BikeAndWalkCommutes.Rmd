@@ -23,9 +23,33 @@ library(plyr)
 ```{r Reading data}
 commute_mode <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-11-05/commute.csv")
 ```
+
 ```{r Cleaning data}
-
-
+# Clean city, type and state
+# (?<= ) means "look for a space before this, but don't include it in what we
+# extract."
+# Square brackets mean "look for any of these", so [a-z() ] means "look for
+# lowercase letters, parentheses, or spaces."
+# The plus sign means "find at least one of these."
+# The dollar sign means "this has to occur at the end of the text."
+target <- "(?<= )[a-z() ]+$"
+commute_mode <- commute_mode %>% 
+  dplyr::mutate(
+    type = dplyr::if_else(
+      stringr::str_detect(city, target),
+      stringr::str_extract(city, target),
+      "city"
+    ),
+    city = stringr::str_trim(stringr::str_replace(city, type, "")),
+    state = dplyr::if_else(
+      state == "Ca",
+      "California",
+      dplyr::if_else(state == "Massachusett",
+                     "Massachusetts",
+                     state
+      )
+    )
+  )
 ```
 
 ## Clustering of cities
