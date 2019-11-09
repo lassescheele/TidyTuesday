@@ -17,11 +17,13 @@ library(factoextra)
 library(magrittr)
 library(reshape2)
 library(plyr)
+library(tmaptools)
+library(ggmap)
 ```
 
 
 ```{r Reading data}
-commute_mode <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-11-05/commute.csv")
+commute_mode_raw <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-11-05/commute.csv")
 ```
 
 ```{r Cleaning data}
@@ -33,14 +35,14 @@ commute_mode <- readr::read_csv("https://raw.githubusercontent.com/rfordatascien
 # The plus sign means "find at least one of these."
 # The dollar sign means "this has to occur at the end of the text."
 target <- "(?<= )[a-z() ]+$"
-commute_mode <- commute_mode %>% 
+commute_mode <- commute_mode_raw %>% 
   dplyr::mutate(
     type = dplyr::if_else(
       stringr::str_detect(city, target),
       stringr::str_extract(city, target),
       "city"
     ),
-    city = stringr::str_trim(stringr::str_replace(city, type, "")),
+    city = stringr::str_trim(stringr::str_replace(stringr::str_replace(stringr::str_replace(city, type, ""),"Town",""),"()","")),
     state = dplyr::if_else(
       state == "Ca",
       "California",
@@ -50,6 +52,19 @@ commute_mode <- commute_mode %>%
       )
     )
   )
+
+commute_mode %>%
+  filter(str_detect(city,"Town")) %>%
+  select(city)
+```
+
+
+```{r Geocode cities wtih tmaptools}
+cities_df <- commute_mode %>% distinct(city, state)
+geocode_OSM("Agawam Town,	Massachusetts")
+geocode_OSM("Aberdeen, South Dakota")
+locations_df <- geocode_OSM(str_c(cities_df$city, ", ", cities_df$state))
+
 ```
 
 ## Clustering of cities
@@ -57,7 +72,7 @@ commute_mode <- commute_mode %>%
 Input: https://www.datanovia.com/en/blog/types-of-clustering-methods-overview-and-quick-start-r-code/
 
 
-```{r Prepare ciries for clustering}
+```{r Prepare cities for clustering}
 commute_mode_clustering_city <- commute_mode %>%
   select(city, mode, n) %>%
   dcast(formula=city ~ mode, value.var="n", fun.aggregate = mean, na.rm=TRUE) %>%
@@ -68,8 +83,14 @@ commute_mode_clustering_city <- commute_mode %>%
   dcast(formula=city ~ mode, value.var="percent", fun.aggregate = mean, na.rm=TRUE) %>%
   dplyr::rename(percent_workers_biking = Bike,
                 percent_workers_walking = Walk)), by = "city")
+# commute_mode_clustering_city <- commute_mode_clustering_city %>%
+#   filter(city!="New York")
 row.names(commute_mode_clustering_city) <- commute_mode_clustering_city$city
 commute_mode_clustering_city <- commute_mode_clustering_city %>% select(-city)
+
+commute_mode_clustering_city_scaled <- commute_mode_clustering_city %>%
+  na.omit() %>%          # Remove missing values (NA)
+  scale() 
 ```
 
 ```{r}
@@ -84,9 +105,31 @@ commute_mode_clustering_city <- commute_mode_clustering_city %>% select(-city)
 # knitr::include_graphics('/Plots/matrix.png')
 ```
 
-```{r Clustering cities}
-
+```{r Finding the optimal number of clusters}
+fviz_nbclust(commute_mode_clustering_city_scaled, kmeans, method = "silhouette")
+fviz_nbclust(commute_mode_clustering_city_scaled, kmeans, method = "wss")
+fviz_nbclust(commute_mode_clustering_city_scaled, kmeans, method = "gap_stat")
 ```
+
+```{r Clustering cities}
+set.seed(123)
+# Compute k-means
+km.res <- kmeans(commute_mode_clustering_city_scaled, 2, nstart = 25)
+# Visualize
+plot <- fviz_cluster(km.res, data = commute_mode_clustering_city_scaled,
+             ellipse.type = "convex",
+             palette = "jco",
+             ggtheme = theme_minimal())
+plot
+plot + coord_cartesian(xlim=c(1,8), ylim=c(-2.5,3))
+
+
+# Compute PAM
+pam.res <- pam(commute_mode_clustering_city_scaled,3)
+# Visualize
+fviz_cluster(pam.res) #+ coord_cartesian(xlim=c(1,4), ylim=c(-2.5,3))
+```
+
 
 
 ## Clustering of States
