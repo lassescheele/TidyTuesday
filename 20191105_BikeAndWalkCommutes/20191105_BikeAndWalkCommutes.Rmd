@@ -19,6 +19,8 @@ library(reshape2)
 library(plyr)
 library(tmaptools)
 library(ggmap)
+library(spData)
+library(mapview)
 ```
 
 
@@ -106,8 +108,8 @@ commute_mode_clustering_city_scaled <- commute_mode_clustering_city %>%
 ```
 
 ```{r Finding the optimal number of clusters}
-fviz_nbclust(commute_mode_clustering_city_scaled, kmeans, method = "silhouette")
-fviz_nbclust(commute_mode_clustering_city_scaled, kmeans, method = "wss")
+# fviz_nbclust(commute_mode_clustering_city_scaled, kmeans, method = "silhouette")
+# fviz_nbclust(commute_mode_clustering_city_scaled, kmeans, method = "wss")
 fviz_nbclust(commute_mode_clustering_city_scaled, kmeans, method = "gap_stat")
 ```
 
@@ -147,6 +149,16 @@ commute_mode_clustering_state <- commute_mode %>%
                 percent_workers_walking = Walk)), by = "state")
 row.names(commute_mode_clustering_state) <- commute_mode_clustering_state$state
 commute_mode_clustering_state <- commute_mode_clustering_state %>% select(-state)
+
+commute_mode_clustering_state_scaled <- commute_mode_clustering_state %>%
+  na.omit() %>%          # Remove missing values (NA)
+  scale() 
+```
+
+```{r Finding the optimal number of clusters}
+# fviz_nbclust(commute_mode_clustering_state_scaled, kmeans, method = "silhouette")
+# fviz_nbclust(commute_mode_clustering_state_scaled, kmeans, method = "wss")
+fviz_nbclust(commute_mode_clustering_state_scaled, kmeans, method = "gap_stat")
 ```
 
 ```{r}
@@ -156,9 +168,45 @@ fviz_dist(res.dist,
    gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
 ```
 
-```{r Clustering states}
+```{r Clustering cities}
+set.seed(123)
+# Compute k-means
+km.res <- kmeans(commute_mode_clustering_state_scaled, 2, nstart = 25)
+# Visualize
+plot <- fviz_cluster(km.res, data = commute_mode_clustering_city_scaled,
+             ellipse.type = "convex",
+             palette = "jco",
+             ggtheme = theme_minimal())
+plot
+plot + coord_cartesian(xlim=c(1,8), ylim=c(-2.5,3))
+
+
+# Compute PAM
+pam.res <- pam(commute_mode_clustering_city_scaled,3)
+# Visualize
+fviz_cluster(pam.res) #+ coord_cartesian(xlim=c(1,4), ylim=c(-2.5,3))
+```
+
+```{r Finding the optimal number of clusters}
+# fviz_nbclust(commute_mode_clustering_city_scaled, kmeans, method = "silhouette")
+# fviz_nbclust(commute_mode_clustering_city_scaled, kmeans, method = "wss")
+fviz_nbclust(commute_mode_clustering_city_scaled, kmeans, method = "gap_stat")
+```
+
+```{r Clustering of states}
 
 ```
+
+```{r Prepare data, fig.height=12, fig.width=12}
+data(us_states)
+data(hawaii)
+data(alaska)
+hawaii <- sf::st_transform(hawaii,sf::st_crs(us_states))
+alaska <- sf::st_transform(alaska,sf::st_crs(us_states))
+us_states_all <- rbind(us_states,hawaii,alaska)
+mapview(us_states_all)
+```
+
 
 
 
